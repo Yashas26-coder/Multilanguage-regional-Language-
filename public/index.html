@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Veritas - AI Fact Checker</title>
+
+<style>
+body{margin:0;font-family:'Segoe UI';background:#f3f4f6;}
+.container{display:flex;}
+
+.sidebar{
+width:220px;height:100vh;background:#1f2937;color:white;
+padding:30px 20px;
+}
+
+.sidebar button{
+width:100%;padding:12px;margin-bottom:15px;
+background:#374151;border:none;color:white;
+border-radius:6px;cursor:pointer;
+}
+
+.main{flex:1;padding:60px;text-align:center;}
+
+.card{
+background:white;padding:30px;border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+width:70%;margin:auto;
+}
+
+textarea{
+width:100%;height:150px;padding:12px;
+border-radius:8px;border:1px solid #d1d5db;
+}
+
+.detect-btn{
+margin-top:20px;padding:14px 30px;
+background:linear-gradient(135deg,#111827,#374151);
+color:white;border:none;border-radius:8px;
+cursor:pointer;
+}
+
+.result-card{
+margin-top:30px;padding:20px;border-radius:10px;
+display:none;
+}
+
+.real{background:#dcfce7;color:#166534;}
+.fake{background:#fee2e2;color:#991b1b;}
+.error{background:#fef3c7;color:#92400e;}
+
+.history{
+margin-top:30px;text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="sidebar">
+<h2>Veritas</h2>
+<button onclick="showAnalyze()">Analyze</button>
+<button onclick="loadHistory()">History</button>
+</div>
+
+<div class="main">
+
+<h1>Verify the News</h1>
+
+<div class="card">
+<textarea id="newsText" placeholder="Paste news here..."></textarea>
+<br>
+<button class="detect-btn" onclick="detectFake()">Detect</button>
+
+<div id="resultCard" class="result-card"></div>
+<div id="historyBox" class="history"></div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+function showAnalyze(){
+document.getElementById("historyBox").innerHTML="";
+}
+
+function detectFake(){
+
+const text=document.getElementById("newsText").value.trim();
+const resultCard=document.getElementById("resultCard");
+
+if(text.length<10){
+resultCard.style.display="block";
+resultCard.className="result-card error";
+resultCard.innerHTML="⚠ Enter more text.";
+return;
+}
+
+resultCard.style.display="block";
+resultCard.innerHTML="⏳ Detecting...";
+
+fetch("http://127.0.0.1:5000/fake-detect",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({text:text})
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.result==="REAL"){
+resultCard.className="result-card real";
+resultCard.innerHTML=
+"✅ REAL<br>Confidence: "+data.confidence+
+"%<br><small>"+data.translated_text+"</small>";
+}
+else{
+resultCard.className="result-card fake";
+resultCard.innerHTML=
+"🚨 FAKE<br>Confidence: "+data.confidence+
+"%<br><small>"+data.translated_text+"</small>";
+}
+});
+}
+
+function loadHistory(){
+
+fetch("http://127.0.0.1:5000/history")
+.then(res=>res.json())
+.then(data=>{
+
+let html="<h3>History</h3>";
+
+data.forEach(item=>{
+html+=`
+<div style="background:white;padding:12px;margin:8px;
+border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+<b>${item.result}</b> (${item.confidence}%)
+<br><small>${item.text}</small>
+</div>`;
+});
+
+document.getElementById("historyBox").innerHTML=html;
+});
+}
+
+</script>
+
+</body>
+</html>

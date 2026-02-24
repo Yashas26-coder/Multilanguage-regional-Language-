@@ -1,0 +1,38 @@
+<h2>Login</h2>
+
+<input id="u" placeholder="Username">
+<br><br>
+<input id="p" type="password" placeholder="Password">
+<br><br>
+
+<button type="button" onclick="login()">Login</button>
+
+<script>
+function login(){
+    const username = document.getElementById("u").value;
+    const password = document.getElementById("p").value;
+
+    fetch("http://127.0.0.1:5000/login",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            username: username,
+            password: password
+        })
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if(d.success){
+            alert("Login Successful");
+            window.location.href = "/app";   // ✅ Correct redirect
+        }
+        else{
+            alert("Invalid Login");
+        }
+    })
+    .catch(err=>{
+        alert("Server Error");
+        console.error(err);
+    });
+}
+</script>
